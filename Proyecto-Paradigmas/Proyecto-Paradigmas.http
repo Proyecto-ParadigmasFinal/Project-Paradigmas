@@ -1,0 +1,6 @@
+@Proyecto_Paradigmas_HostAddress = http://localhost:5208
+
+GET {{Proyecto_Paradigmas_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
