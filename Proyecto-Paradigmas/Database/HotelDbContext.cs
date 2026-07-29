@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Proyecto_Paradigmas.Database.Entities;
 using ProyectoParadigmas.Entities;
 
 namespace ProyectoParadigmas.Database
@@ -11,5 +12,6 @@ namespace ProyectoParadigmas.Database
 
         public DbSet<CatalogItemEntity> CatalogItems { get; set; }
         public DbSet<ReservationEntity> Reservations { get; set; }
+        public DbSet<UserEntity> Users { get; set; }
     }
 }
