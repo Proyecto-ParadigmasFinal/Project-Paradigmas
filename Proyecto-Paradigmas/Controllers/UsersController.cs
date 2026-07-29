@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace Proyecto_Paradigmas.Controllers
@@ -16,12 +17,15 @@ namespace Proyecto_Paradigmas.Controllers
     [Route("api/users")]
     [ApiController]
     public class UsersController : ControllerBase
+    
     {
         private readonly HotelDbContext _context;
+        private readonly PasswordHasher<UserEntity> _passwordHasher;
 
         public UsersController(HotelDbContext context)
         {
             _context = context;
+            _passwordHasher = new PasswordHasher<UserEntity>();
         }
 
         [HttpPost("register")]
@@ -38,13 +42,13 @@ namespace Proyecto_Paradigmas.Controllers
                 {
                     Id = Guid.NewGuid().ToString(),
                     Correo = request.Correo,
-                    PasswordHash = request.Password,
                     Rol = string.IsNullOrWhiteSpace(request.Rol) ? "Cliente" : request.Rol,
                     CreatedBy = "System",
                     CreatedDate = DateTime.UtcNow,
                     UpdatedBy = "System",
                     UpdatedDate = DateTime.UtcNow
                 };
+                newUser.PasswordHash = _passwordHasher.HashPassword(newUser, request.Password);
 
                 _context.Users.Add(newUser);
                 await _context.SaveChangesAsync();
@@ -63,10 +67,21 @@ namespace Proyecto_Paradigmas.Controllers
             var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Correo == request.Correo);
 
-            if (user == null || user.PasswordHash != request.Password)
-                {
-                    return Unauthorized(new { message = "Correo o contraseña incorrectos." });
-                }
+        if (user == null)
+        {
+            return Unauthorized(new { message = "Correo o contraseña incorrectos." });
+        }
+
+        var passwordResult = _passwordHasher.VerifyHashedPassword(
+        user,
+        user.PasswordHash,
+        request.Password
+        );
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            return Unauthorized(new { message = "Correo o contraseña incorrectos." });
+        }
 
             var claims = new[]
             {
