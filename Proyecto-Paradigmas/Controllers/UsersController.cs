@@ -5,6 +5,11 @@ using Persons.API.Constants;
 using Proyecto_Paradigmas.Database.Entities;
 using Proyecto_Paradigmas.Dtos.Users;
 using ProyectoParadigmas.Database;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
 
 namespace Proyecto_Paradigmas.Controllers
 {
@@ -50,6 +55,44 @@ namespace Proyecto_Paradigmas.Controllers
             {
                 return StatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR, new { message = $"Error interno: {ex.Message}" });
             }
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] UserLoginDto request)
+        {
+            var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Correo == request.Correo);
+
+            if (user == null || user.PasswordHash != request.Password)
+                {
+                    return Unauthorized(new { message = "Correo o contraseña incorrectos." });
+                }
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.Correo),
+                new Claim(ClaimTypes.Role, user.Rol)
+            };
+
+            var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes("ClaveSecretaProyectoHotelParadigmas2026"));
+
+            var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+            issuer: "ProyectoParadigmas",
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(2),
+            signingCredentials: credentials
+            );
+
+        return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                rol = user.Rol
+            });
         }
     }
 }
