@@ -2,12 +2,12 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-
+using Proyecto_Paradigmas.Services.Interfaces;
 namespace Proyecto_Paradigmas.Services
 {
     public class PaypalService
     {
-        public class PayPalService : IPaypalService
+        public class PayPalService : IPaypalServices
         {
             private readonly HttpClient _httpClient;
             private readonly IConfiguration _configuration;
@@ -22,8 +22,6 @@ namespace Proyecto_Paradigmas.Services
             {
                 var token = await GetAccessTokenAsync();
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                // Payload mínimo requerido por PayPal para crear una orden
                 var orderPayload = new
                 {
                     intent = "CAPTURE",
@@ -33,7 +31,7 @@ namespace Proyecto_Paradigmas.Services
                     {
                         amount = new
                         {
-                            currency_code = "USD", // PayPal Sandbox usa USD por defecto
+                            currency_code = "USD",
                             value = request.TotalAmount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
                         }
                     }

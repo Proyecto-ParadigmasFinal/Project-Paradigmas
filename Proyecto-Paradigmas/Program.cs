@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Proyecto_Paradigmas.Services.Interfaces;
+using Proyecto_Paradigmas.Services;
 using ProyectoParadigmas.Database;
 using ProyectoParadigmas.Services.CatalogItems;
 using Scalar.AspNetCore;
@@ -14,6 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddTransient<ICatalogItemService, CatalogItemService>();
+builder.Services.AddHttpClient<IPaypalServices, PaypalService>();
 
 var app = builder.Build();
 
