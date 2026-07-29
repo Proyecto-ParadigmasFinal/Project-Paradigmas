@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Proyecto_Paradigmas.Database;
 using Proyecto_Paradigmas.Dtos.Payments;
+using Proyecto_Paradigmas.Services;
 using Proyecto_Paradigmas.Services.Interfaces;
 using ProyectoParadigmas.Database;
+using ProyectoParadigmas.Entities;
 
 namespace Proyecto_Paradigmas.Controllers
 {
@@ -25,19 +26,22 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                //Validar que la reserva existe en la BD
-                var reservation = await _context.Set<Proyecto_Paradigmas.Database.Entities.ReservationEntity>()
+                // Resolución de tipo mediante using directo, evitando rutas absolutas erróneas
+                var reservation = await _context.Set<ReservationEntity>()
                                                 .FirstOrDefaultAsync(r => r.Id == request.ReservationId);
 
                 if (reservation == null) return NotFound("Reserva no encontrada.");
-                var result = await _payPalService.CreateOrderAsync(request);
+
+                var result = await _paypalService.CreateOrderAsync(request);
+
                 reservation.PayPalOrderId = result.OrderId;
                 await _context.SaveChangesAsync();
+
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error interno al conectar con PayPal: {ex.Message}");
+                return StatusCode(500, $"Error proveedor pago: {ex.Message}");
             }
         }
 
@@ -50,11 +54,12 @@ namespace Proyecto_Paradigmas.Controllers
 
                 if (!isCaptured) return BadRequest("El pago no pudo ser procesado o fue rechazado.");
 
-                var reservation = await _context.Set<Proyecto_Paradigmas.Database.Entities.ReservationEntity>()
+                var reservation = await _context.Set<ProyectoParadigmas.Database.Entities.ReservationEntity>()
                                                 .FirstOrDefaultAsync(r => r.PayPalOrderId == orderId);
 
                 if (reservation != null)
                 {
+                    reservation.IsPaid = true; reservation.OrderId = orderId;
                     await _context.SaveChangesAsync();
                 }
 

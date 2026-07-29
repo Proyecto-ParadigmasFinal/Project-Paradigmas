@@ -2,7 +2,7 @@
 {
     public class PaymentCreateDto
     {
-        public int ReservationId { get; set; }
+        public string ReservationId { get; set; }
         public decimal TotalAmount { get; set; }
     }
 }
