@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Proyecto_Paradigmas.Dtos.CatalogItems;
 using ProyectoParadigmas.Dtos.CatalogItems;
 using ProyectoParadigmas.Services.CatalogItems;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProyectoParadigmas.Controllers
 {
@@ -30,6 +31,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         public async Task<ActionResult> Create(CatalogItemCreateDto dto)
         {
@@ -37,6 +39,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(string id, CatalogItemEditDto dto)
         {
@@ -44,6 +47,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(string id)
         {
