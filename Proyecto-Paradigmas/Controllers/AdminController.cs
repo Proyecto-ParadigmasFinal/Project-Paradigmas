@@ -24,7 +24,6 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                // Corrección: Usar FindAsync evade el conflicto de LINQ para llaves primarias
                 var room = await _context.CatalogItems.FindAsync(id);
 
                 if (room == null)
@@ -50,13 +49,10 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                // Corrección: Declarar IQueryable explícitamente
                 IQueryable<ReservationEntity> query = _context.Reservations
                     .Where(r => r.EstadoTransaccion == "Completado"
                              && r.FechaTransaccion >= startDate
                              && r.FechaTransaccion <= endDate);
-
-                // Corrección: Llamar a la extensión estática de EF Core directamente para evitar System.Linq.Async
                 var sales = await EntityFrameworkQueryableExtensions.ToListAsync(query);
 
                 var totalSales = sales.Sum(r => r.MontoTotal);

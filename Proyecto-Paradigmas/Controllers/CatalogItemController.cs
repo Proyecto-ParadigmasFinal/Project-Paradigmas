@@ -31,7 +31,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult> Create(CatalogItemCreateDto dto)
         {
@@ -39,7 +39,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(string id, CatalogItemEditDto dto)
         {
@@ -47,7 +47,7 @@ namespace ProyectoParadigmas.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(string id)
         {

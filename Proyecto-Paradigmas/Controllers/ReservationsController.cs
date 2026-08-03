@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persons.API.Constants;
-using Proyecto_Paradigmas.Dtos.Admin;
 using Proyecto_Paradigmas.Dtos.Reservations;
 using ProyectoParadigmas.Database;
 using ProyectoParadigmas.Entities;
+using System.Security.Claims;
 
 namespace Proyecto_Paradigmas.Controllers
 {
@@ -20,25 +20,51 @@ namespace Proyecto_Paradigmas.Controllers
             _context = context;
         }
 
-        [HttpPatch("rooms/{id}/status")]
-        public async Task<IActionResult> UpdateRoomStatus(string id, [FromBody] UpdateRoomStatusDto request)
+        [HttpPost]
+        public async Task<IActionResult> CreateReservation([FromBody] ReservationCreateDto request)
         {
             try
             {
-                // Corrección: Usar FindAsync evade el conflicto de LINQ para llaves primarias
-                var room = await _context.CatalogItems.FindAsync(id);
+                var room = await _context.CatalogItems.FindAsync(request.CatalogItemId);
 
                 if (room == null)
                     return StatusCode(HttpStatusCode.NOT_FOUND, new { message = "Habitación/Paquete no encontrado." });
 
-                room.Estado = request.Estado;
+                if (room.Estado != "Disponible")
+                    return StatusCode(HttpStatusCode.BAD_REQUEST, new { message = "La habitación no está disponible." });
 
-                room.UpdatedDate = DateTime.UtcNow;
-                room.UpdatedBy = "Admin";
+                // Cálculo de días y monto total
+                var days = (request.FechaCheckOut.Date - request.FechaCheckIn.Date).Days;
+                if (days <= 0) days = 1;
+
+                var totalAmount = room.Precio * days;
+
+                var newReservation = new ReservationEntity
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = request.UserId,
+                    CatalogItemId = request.CatalogItemId,
+                    FechaCheckIn = request.FechaCheckIn,
+                    FechaCheckOut = request.FechaCheckOut,
+                    MontoTotal = totalAmount,
+                    EstadoTransaccion = "Pendiente",
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedBy = "System",
+                    UpdatedDate = DateTime.UtcNow
+                };
+
+                _context.Reservations.Add(newReservation);
+                room.Estado = "Ocupada";
 
                 await _context.SaveChangesAsync();
 
-                return StatusCode(HttpStatusCode.OK, new { message = "Estado actualizado correctamente." });
+                return StatusCode(HttpStatusCode.CREATED, new
+                {
+                    message = "Reserva creada exitosamente.",
+                    reservationId = newReservation.Id,
+                    montoTotal = totalAmount
+                });
             }
             catch (Exception ex)
             {
@@ -46,29 +72,24 @@ namespace Proyecto_Paradigmas.Controllers
             }
         }
 
-        [HttpGet("reports/sales")]
-        public async Task<IActionResult> GetSalesReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        [HttpGet("my-reservations")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetMyReservations()
         {
             try
             {
-                // Corrección: Declarar IQueryable explícitamente
-                IQueryable<ReservationEntity> query = _context.Reservations
-                    .Where(r => r.EstadoTransaccion == "Completado"
-                             && r.FechaTransaccion >= startDate
-                             && r.FechaTransaccion <= endDate);
+                var userEmail = User.FindFirstValue(ClaimTypes.Name);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Correo == userEmail);
 
-                // Corrección: Llamar a la extensión estática de EF Core directamente para evitar System.Linq.Async
-                var sales = await EntityFrameworkQueryableExtensions.ToListAsync(query);
+                if (user == null)
+                    return StatusCode(HttpStatusCode.UNAUTHORIZED, new { message = "Usuario no válido." });
 
-                var totalSales = sales.Sum(r => r.MontoTotal);
-                var totalTransactions = sales.Count;
+                var reservas = await _context.Reservations
+                    .Where(r => r.UserId == user.Id)
+                    .OrderByDescending(r => r.CreatedDate)
+                    .ToListAsync();
 
-                return StatusCode(HttpStatusCode.OK, new
-                {
-                    TotalMonto = totalSales,
-                    TotalTransacciones = totalTransactions,
-                    Detalle = sales
-                });
+                return StatusCode(HttpStatusCode.OK, reservas);
             }
             catch (Exception ex)
             {
