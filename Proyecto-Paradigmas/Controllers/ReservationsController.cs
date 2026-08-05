@@ -78,14 +78,12 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                var userEmail = User.FindFirstValue(ClaimTypes.Name);
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Correo == userEmail);
-
-                if (user == null)
-                    return StatusCode(HttpStatusCode.UNAUTHORIZED, new { message = "Usuario no válido." });
-
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                          ?? User.Claims.FirstOrDefault(c => c.Type == "id" || c.Type == "sub" || c.Type == "nameid")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return StatusCode(HttpStatusCode.UNAUTHORIZED, new { message = "No se pudo identificar al usuario en el token." });
                 var reservas = await _context.Reservations
-                    .Where(r => r.UserId == user.Id)
+                    .Where(r => r.UserId == userId)
                     .OrderByDescending(r => r.CreatedDate)
                     .ToListAsync();
 

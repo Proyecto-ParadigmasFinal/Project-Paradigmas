@@ -84,6 +84,7 @@ namespace Proyecto_Paradigmas.Controllers
 
             var claims = new[]
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.Correo),
                 new Claim(ClaimTypes.Role, user.Rol)
             };

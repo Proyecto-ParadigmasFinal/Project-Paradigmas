@@ -70,5 +70,23 @@ namespace Proyecto_Paradigmas.Controllers
                 return StatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR, new { message = $"Error interno: {ex.Message}" });
             }
         }
+
+        [HttpGet("reservations")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetAllReservations()
+        {
+            try
+            {
+                var reservas = await _context.Reservations
+                    .OrderByDescending(r => r.CreatedDate)
+                    .ToListAsync();
+
+                return StatusCode(HttpStatusCode.OK, reservas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR, new { message = $"Error interno: {ex.Message}" });
+            }
+        }
     }
 }
