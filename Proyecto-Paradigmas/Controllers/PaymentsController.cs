@@ -9,6 +9,7 @@ using ProyectoParadigmas.Entities;
 
 namespace Proyecto_Paradigmas.Controllers
 {
+    [ApiController]
     [Route("api/payment")]
     public class PaymentsController : ControllerBase
     {
@@ -26,7 +27,6 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                // Consulta directa mediante el DbSet configurado en HotelDbContext
                 var reservation = await _context.Reservations
                                                 .FirstOrDefaultAsync(r => r.Id == request.ReservationId);
 

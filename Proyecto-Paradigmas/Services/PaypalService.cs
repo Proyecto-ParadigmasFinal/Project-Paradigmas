@@ -34,7 +34,7 @@ namespace Proyecto_Paradigmas.Services
                         amount = new
                         {
                             currency_code = "USD",
-                            value = request.TotalAmount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                            value = request.PrecioTotal.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
                         }
                     }
                 }

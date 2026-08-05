@@ -33,7 +33,6 @@ namespace Proyecto_Paradigmas.Controllers
         {
             try
             {
-                // Refactorizado a FirstOrDefaultAsync para evitar conflictos de IAsyncEnumerable
                 var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Correo == request.Correo);
                 if (existingUser != null)
                     return StatusCode(HttpStatusCode.CONFLICT, new { message = "El correo ya se encuentra registrado." });
@@ -85,6 +84,7 @@ namespace Proyecto_Paradigmas.Controllers
 
             var claims = new[]
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.Correo),
                 new Claim(ClaimTypes.Role, user.Rol)
             };
